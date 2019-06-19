@@ -43,47 +43,59 @@
 #define oss_read           read
 #define oss_write          write
 
-
-#define OSS_FILE_OP_FWRITE_BUF_SIZE 2048
-#define OSS_FILE_OP_READ_ONLY     (((unsigned int)1) << 1)
-#define OSS_FILE_OP_WRITE_ONLY    (((unsigned int)1) << 2)
-#define OSS_FILE_OP_OPEN_EXISTING (((unsigned int)1) << 3)
-#define OSS_FILE_OP_OPEN_ALWAYS   (((unsigned int)1) << 4)
-#define OSS_FILE_OP_OPEN_TRUNC    (((unsigned int)1) << 5)
+#define OSS_PRIMITIVE_FILE_OP_FWRITE_BUF_SIZE 2048
+#define OSS_PRIMITIVE_FILE_OP_READ_ONLY     (((unsigned int)1) << 1)
+#define OSS_PRIMITIVE_FILE_OP_WRITE_ONLY    (((unsigned int)1) << 2)
+#define OSS_PRIMITIVE_FILE_OP_OPEN_EXISTING (((unsigned int)1) << 3)
+#define OSS_PRIMITIVE_FILE_OP_OPEN_ALWAYS   (((unsigned int)1) << 4)
+#define OSS_PRIMITIVE_FILE_OP_OPEN_TRUNC    (((unsigned int)1) << 5)
 
 #define OSS_INVALID_HANDLE_FD_VALUE (-1)
 
 typedef oss_off_t offsetType ;
 
-class ossFileOp {
-public:
-   typedef int       handleType;
-private:
-   handleType        _fileHandle;
-   ossFileOp(const ossFileOp &){}
-   const ossFileOp &operator=(const ossFileOp&);
-   bool _bIsStdout;
+class ossPrimitiveFileOp
+{
+public :
+   typedef  int    handleType ;
+private :
+   handleType _fileHandle ;
+   ossPrimitiveFileOp( const ossPrimitiveFileOp & ) {}
+   const ossPrimitiveFileOp &operator=( const ossPrimitiveFileOp & ) ;
+   bool _bIsStdout ;
 
-protected:
-   void setFileHandle(handleType handle);
+protected :
+   void setFileHandle( handleType handle ) ;
 
-public:
-   ossFileOp();
-   int Open(const char *pFilePath, unsigned int options = OSS_FILE_OP_OPEN_ALWAYS);
-   void openStdout();
-   void Close();
-   bool isValid(void);
-   int Read(void *pBuf, size_t len, int *const pReadSize);
-   int Write(void *pBuf, size_t len);
-   int fWrite(const char *fmt, ...);
-   offsetType getCurrentOffset (void) const;
-   int seekToOffset(offsetType offset);
-   int seekToEnd(void);
-   int getSize(offsetType *const pFileSize);
-   handleType getHandle(void) const {
-      return _fileHandle;
+public :
+   ossPrimitiveFileOp() ;
+   int Open
+   (
+      const char * pFilePath,
+      unsigned int options = OSS_PRIMITIVE_FILE_OP_OPEN_ALWAYS
+   ) ;
+   void openStdout() ;
+   void Close() ;
+   bool isValid( void ) ;
+   int Read( const size_t size, void * const pBuf, int * const pBytesRead ) ;
+
+   int Write( const void * pBuf, size_t len = 0 ) ;
+
+   int fWrite( const char * fmt, ... ) ;
+
+   offsetType getCurrentOffset (void) const ;
+
+   void seekToOffset( offsetType offset ) ;
+
+   void seekToEnd( void ) ;
+
+   int getSize( offsetType * const pFileSize ) ;
+
+   handleType getHandle( void ) const
+   {
+      return _fileHandle ;
    }
+} ;
 
-};
 
 #endif
