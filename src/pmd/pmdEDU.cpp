@@ -85,8 +85,9 @@ pmdEntryPoint getEntryFuncByType(EDU_TYPES type)
 {
 	pmdEntryPoint rt = NULL;
 	static const _eduEntryInfo entry[] = {
+		/*
 		ON_EDUTYPE_TO_ENTRY1(EDU_TYPE_AGENT, false,
-							pmdAgentEntryPoint, "Agent"),
+							pmdAgentEntryPoint, "Agent"),*/
 		ON_EDUTYPE_TO_ENTRY1(EDU_TYPE_TCPLISTENER, true,
 							pmdTcpListenerEntryPoint,
 							"TCPListener"),
@@ -180,7 +181,7 @@ int pmdEDUEntryPoint(EDU_TYPES type, pmdEDUCB *cb, void *arg)
 		if(!isForced && PMD_EDU_EVENT_RESUME == event._eventType)
 		{
 			// set EDU status to wait
-			eduMgr->waitEDU(myEDUID);
+			//eduMgr->waitEDU(myEDUID);
 			// run the main function
 			pmdEntryPoint entryFunc = getEntryFuncByType(type);
 			if(!entryFunc)
@@ -230,7 +231,7 @@ int pmdEDUEntryPoint(EDU_TYPES type, pmdEDUCB *cb, void *arg)
 			event.reset();
 		}
 
-		rc = eduMgr->returnEDU(myEDUID, isForced, &eduDestroyed);
+		//rc = eduMgr->returnEDU(myEDUID, isForced, &eduDestroyed);
 		if(rc)
 		{
 			PD_LOG(PDERROR, "Invalid EDU Status for EDU: %lld, type %s",

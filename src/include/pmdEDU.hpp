@@ -38,7 +38,7 @@ enum EDU_TYPES
 	EDU_TYPE_AGENT,
 
 	EDU_TYPE_UNKNOWN,
-	EDU_TYPEMAXIMUM = EDU_TYPE_UNKNOWN
+	EDU_TYPE_MAXIMUM = EDU_TYPE_UNKNOWN
 };
 
 enum EDU_STATUS
@@ -114,7 +114,7 @@ public:
 	{
 		return _status;
 	}
-	inline void setType(EDU_STATUS type)
+	inline void setType(EDU_TYPES type)
 	{
 		_type = type;
 	}

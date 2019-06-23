@@ -71,7 +71,7 @@ public:
 		_queue.pop();
 	}
 
-	bool time_wait_and_pop(Data &value, long long millsec)
+	bool timed_wait_and_pop(Data &value, long long millsec)
 	{
 		boost::system_time const timeout = boost::get_system_time() +
 			boost::posix_time::milliseconds(millsec);
@@ -79,7 +79,7 @@ public:
 			// if time_wait return false, that means we failed by timeout
 			while(_queue.empty())
 			{
-				if(!_cond.time_wait(lock, timeout))
+				if(!_cond.timed_wait(lock, timeout))
 				{
 					return false;
 				}
