@@ -197,3 +197,113 @@ error:
    goto done;
 }
 
+int pmdEDUMgr::waitEDUPost(EDUID eduID, pmdEDUEvent& event,
+                           long ling millsecond = -1)
+{
+   int rc = EDB_OK;
+   pmdEDUCB* eduCB = NULL;
+   std::map<EDUID, pmdEDUCB*>::iterator it;
+   // shared lock the block, since we don't change anything
+   _mutex.get_shared();
+   if(_runQueue.end() == (it = _runQueue.find(eduID)))
+   {
+      // if we cannot find it in runqueue, we search for idle queue
+      // note that during the time, we already have EDUMgr locked,
+      // so thread cannot change queue from idle to run
+      // that means we are safe to exame both queues
+      if(_idleQueue.end() == (it = _idleQueue.find(eduID)))
+      {
+         // we can't find edu id anywhere
+         rc = EDB_SYS;
+         goto error;
+      }
+   }
+   eduCB = (*it).second;
+   // wait for event. when millsecond is 0, it should always return true
+   if(!eduCB->waitEvent(event, millsecond))
+   {
+      rc = EDB_TIMEOUT;
+      goto error;
+   }
+done:
+   _mutex.release_shared();
+   return rc;
+error:
+   goto done;
+}
+
+// release control from a given EDU
+// EDUMgr should decide whether put the EDU to pool or destroy it
+// EDU Status must be in waiting or creating
+int pmdEDUMgr::returnEDU(EDUID eduID, bool force, bool* destroyed)
+{
+   int rc = EDB_OK;
+   EDU_TYPES type = EDU_TYPE_UNKNOWN;
+   pmdEDUCB *educb = NULL;
+   std::map<EDUID, pmdEDUCB*>::iterator it;
+   // shared critical section
+   _mutex.get_shared();
+   if(_runQueue.end() == (it = _runQueue.find(eduID)))
+   {
+      if(_idleQueue.end() == (it = _idleQueue.find(eduID)))
+      {
+         rc = EDB_SYS;
+         *destroyed = false;
+         _mutex.release_shared();
+         goto error;
+      }
+   }
+   educb = (*it).second;
+   // if we are trying to destroy EDU manager, or enforce destroy, or
+   // if the total number of threads are more than what we need
+   // we need to destroy this EDU
+   //
+   // Current1 we only able to pool agent and coordagent
+   if(educb)
+   {
+      type = educb->getType();
+   }
+   _mutex.release_shared();
+
+   // if the EDU type can't be pooled, or if we forced, or if the EDU is
+   // destroied, or we exceed max pooled edus, let's destroy it
+   if(!isPoolable(type) || force || isDestroyed() ||
+      size() > (unsigned int)pmdGetKRCB()->getMaxPool())
+   {
+      rc = _destroyEDU(eduID);
+      if(destroy)
+      {
+         // we consider the EDU is destroyed when destroyEDU returns
+         // OK or EDB_SYS (edu can't be found), so that thread can terminate
+         // itself
+         if(EDB_OK == rc || EDB_SYS == rc)
+         {
+            *destroyed = true;
+         }
+         else
+            *destroyed = false;
+      }
+   }
+   else
+   {
+      // in this case, we don't need to care whether the EDU is agent or not
+      // as long as we treat EDB_SYS as "destroyed" signel, we should be 
+      // safe here
+      rc = _deactivateEDU(eduID);
+      if(destroyed)
+      {
+         // when we try to pool the EDU, destroyed set to true only when 
+         // the EDU can't be found in the list
+         if(EDB_SYS == rc)
+         {
+            *destroyed = true;
+         }
+         else
+            *destroyed = false;
+      }
+   }
+done:
+   return rc;
+error:
+   goto done;
+}
