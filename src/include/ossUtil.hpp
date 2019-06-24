@@ -24,7 +24,7 @@ inline void ossSleepmicros(unsigned int s)
 	while(nanosleep(&t, &t) == -1 && errno==EINTR);
 }
 
-inline void ossSleepmilli(unsigned int s)
+inline void ossSleepmillis(unsigned int s)
 {
 	ossSleepmicros( s * 1000);
 }

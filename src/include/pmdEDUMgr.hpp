@@ -32,7 +32,7 @@ private:
 	std::map<EDUID, pmdEDUCB*> _idleQueue;
 	std::map<unsigned int, EDUID> _tid_eduid_map;
 
-	ossLatch _mutex;
+	ossSLatch _mutex;
 	// increment-only EDU id
 	// 64 bit is big enough for most
 	EDUID _EDUID;
@@ -45,7 +45,7 @@ public:
 	pmdEDUMgr() :
 	_EDUID(1),
 	_isQuiesced(false),
-	_isDestroyed(false),
+	_isDestroyed(false)
 	{
 
 	}
