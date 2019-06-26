@@ -147,7 +147,7 @@ private:
 typedef int (*pmdEntryPoint) (pmdEDUCB *, void *);
 pmdEntryPoint getEntryFuncByType(EDU_TYPES type);
 
-int pmdAgentEntryPoint(pmdEDUCB cb, void *arg);
+int pmdAgentEntryPoint(pmdEDUCB *cb, void *arg);
 int pmdTcpListenerEntryPoint(pmdEDUCB *cb, void *arg);
 int pmdEDUEntryPoint(EDU_TYPES type, pmdEDUCB *cb, void *arg);
 

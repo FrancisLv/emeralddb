@@ -26,6 +26,23 @@ using namespace std;
 #define PMD_AGENT_RECIEVE_BUFFER_SZ 4096
 #define EDB_PAGE_SIZE               4096
 
+static int pmdProcessAgentRequest(char *pReceiveBuffer,
+								  int packetSize,
+								  char **ppResultBuffer,
+								  int *pResultBufferSize,
+								  bool *disconnect,
+								  pmdEDUCB *cb)
+{
+	EDB_ASSERT(disconnect, "disconnect can't be NULL")
+	EDB_ASSERT(pReceiveBuffer, "pReceiveBuffer is NULL")
+	PD_LOG(PDEVENT, "Process Agent Request");
+	int rc = EDB_OK;
+	unsigned int probe = 0;
+	**(int**)(ppResultBuffer) = 4;
+	*pResultBufferSize = 4;
+	return rc;
+}
+
 struct MsgReply
 {
 	int a;
@@ -163,7 +180,7 @@ int pmdAgentEntryPoint(pmdEDUCB *cb, void *arg)
 		// send reply if it's not disconnected message
 		if(!disconnect)
 		{
-			rc = pmdSend(pResultBuffer, resultBufferSize, &sock, cb);
+			rc = pmdSend(pResultBuffer, *(int*)pResultBuffer, &sock, cb);
 			if(rc)
 			{
 				if(EDB_APP_FORCED == rc)
