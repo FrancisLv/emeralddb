@@ -70,7 +70,7 @@ struct MsgCommand
 	char      data[0];
 };
 
-int msgBuildReply(char **ppBuffer, int *pBufferSize, int opCode,
+int msgBuildReply(char **ppBuffer, int *pBufferSize,
 				  int returnCode, bson::BSONobj *objReturn);
 
 int msgExtractReply(char *pBuffer, int &returnCode, int &numReturn,
