@@ -237,7 +237,7 @@ int msgBuildDelete(char **ppBuffer, int *pBufferSize, BSONObj &key)
 	pDelete->header.messageLen = size;
 	pDelete->header.opCode     = OP_DELETE;
 	// bson object
-	memcpy(&pDelete->key[0], key.objdata(), keyy.objsize());
+	memcpy(&pDelete->key[0], key.objdata(), key.objsize());
 done:
 	return rc;
 error:
@@ -247,7 +247,7 @@ error:
 int msgExtractDelete(char *pBuffer, BSONObj &key)
 {
 	int rc             = EDB_OK;
-	MsgDelete *pDelete = (MsgDelete*)pBufferSize;
+	MsgDelete *pDelete = (MsgDelete*)pBuffer;
 	// sanity check for header
 	if(pDelete->header.messageLen < (int)sizeof(MsgDelete))
 	{
@@ -325,3 +325,103 @@ error:
 	goto done;
 }
 
+int msgBuildCommand(char **ppBuffer, int *pBufferSize, BSONObj &obj)
+{
+	int rc                = EDB_OK;
+	int size              = sizeof(MsgCommand) + obj.objsize();
+	MsgCommand *pCommand  = NULL;
+	rc = msgCheckBuffer(ppBuffer, pBufferSize, size);
+	if(rc)
+	{
+		PD_LOG(PDERROR, "Failed to realloc buffer for %d bytes, rc = %d",
+			   size, rc);
+		goto error;
+	}
+	// buffer is allocated, let's assign variables
+	pCommand                    = (MsgCommand*)(*ppBuffer);
+	// build header
+	pCommand->header.messageLen = size;
+	pCommand->header.opCode     = OP_COMMAND;
+	// build body
+	pCommand->numArgs           = 1;
+	// bson object
+	memcpy(&pCommand->data[0], obj.objdata(), obj.objsize());
+done:
+	return rc;
+error:
+	goto done; 
+}
+
+int msgBuildCommand(char **ppBuffer, int *pBufferSize, vector<BSONObj*>obj)
+{
+	int rc                   = EDB_OK;
+	int size                 = sizeof(MsgCommand);
+	MsgCommand *pCommand     = NULL;
+	vector<BSONObj*>::iterator it;
+	char *p = NULL;
+	for(it = obj.begin(); it != obj.end(); ++it)
+	{
+		size += (*it)->objsize();
+	}
+	rc = msgCheckBuffer(ppBuffer, pBufferSize, size);
+	if(rc)
+	{
+		PD_LOG(PDERROR, "Failed to realloc buffer for %d bytes, rc = %d",
+			   size, rc);
+		goto error;
+	}
+	// buffer is allocated, let's assign variables
+	pCommand                    = (MsgCommand*)(*ppBuffer);
+	// build header
+	pCommand->header.messageLen = size;
+	pCommand->header.opCode     = OP_COMMAND;
+	// build body
+	pCommand->numArgs           = obj.size();
+	// bson object
+	p = &pCommand->data[0];
+	for(it = obj.begin(); it != obj.end(); ++it)
+	{
+		memcpy(p, (*it)->objdata(), (*it)->objsize());
+		p += (*it)->objsize();
+	}
+done:
+	return rc;
+error:
+	goto done;
+}
+
+int msgExtractCommand(char *pBuffer, int &numArgs, const char **ppObjStart)
+{
+	int rc                = EDB_OK;
+	MsgCommand *pCommand  = (MsgCommand*)pBuffer;
+	// sanity check for header
+	if(pCommand->header.messageLen < (int)sizeof(MsgCommand))
+	{
+		PD_LOG(PDERROR, "Invalid length of command message");
+		rc = EDB_INVALIDARG;
+		goto error;
+	} 
+	// sanity check for opCode
+	if(pCommand->header.opCode != OP_COMMAND)
+	{
+		PD_LOG(PDERROR, "non-command code is received: %d, expected %d",
+			   pCommand->header.opCode, OP_COMMAND);
+		rc = EDB_INVALIDARG;
+		goto error;
+	}
+	// extract
+	numArgs = pCommand->numArgs;
+	// object
+	if(0 == numArgs)
+	{
+		*ppObjStart = NULL;
+	}
+	else
+	{
+		*ppObjStart = &pCommand->data[0];
+	}
+done:
+	return rc;
+error:	
+	goto done;
+}
