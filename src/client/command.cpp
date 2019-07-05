@@ -243,6 +243,46 @@ error:
    goto done;
 }
 
+/******************************QueryCommand****************************************/
+int QueryCommand::handleReply()
+{
+   MsgReply *msg = (MsgReply*)_recvBuf;
+   int returnCode = msg->returnCode;
+   int ret = getError(returnCode);
+   if(ret)
+   {
+      return ret;
+   }
+   bson::BSONObj bsonData = bson::BSONObj(&(msg->data[0]));
+   std::cout<<bsonData.toString() << std::endl;
+   return ret;
+}
+
+int QueryCommand::execute(ossSocket &sock, std::vector<std::string>& argVec)
+{
+   int rc = EDB_OK;
+   if(argVec.size() < 1)
+   {
+      return getError(EDB_QUERY_INVALID_ARGUMENT);
+   }
+   _jsonString = argVec[0];
+   if(!sock.isConnected())
+   {
+      return getError(EDB_SOCK_NOT_CONNECT);
+   }
+
+   rc = sendOrder(sock, msgBuildQuery);
+   PD_RC_CHECK(rc, PDERROR, "Failed to send order, rc = %d", rc);
+   rc = recvReply(sock);
+   PD_RC_CHECK(rc, PDERROR, "Failed to received reply, rc = %d", rc);
+   rc = handleReply();
+   PD_RC_CHECK(rc, PDERROR, "Failed to received reply, rc = %d", rc);
+done:
+   return rc;
+error:
+   goto done;
+}
+
 /******************************ConnectCommand****************************************/
 int ConnectCommand::execute( ossSocket & sock, std::vector<std::string> & argVec )
 {
