@@ -51,6 +51,11 @@ class ICommand
 	typedef int (*OnMsgBuild)(char** ppBuffer, int * pBufferSize, \
 		        bson::BSONObj &obj);
     public:
+      ICommand()
+      {
+          _recvBuf = (char*)malloc(sizeof(char) * RECV_BUF_SIZE);
+          _sendBuf = (char*)malloc(sizeof(char) * SEND_BUF_SIZE);
+      }
     	virtual int execute(ossSocket &sock, std::vector<std::string> & argVec);
     	int         getError(int code);
     protected:
@@ -60,8 +65,10 @@ class ICommand
     protected:
     	virtual int handleReply() {return EDB_OK;}
     protected:
-    	char _recvBuf[RECV_BUF_SIZE];
-    	char _sendBuf[SEND_BUF_SIZE];
+      char *_recvBuf;
+      char *_sendBuf;
+    	//char _recvBuf[RECV_BUF_SIZE];
+    	//char _sendBuf[SEND_BUF_SIZE];
     	std::string _jsonString;
 };
 
