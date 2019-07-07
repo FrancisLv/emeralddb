@@ -46,8 +46,7 @@ protected:
 	std::vector<ossMmapSegment> _segments;
 	char _fileName[OSS_MAX_PATHSIZE];
 public:
-	typedef std::vector<ossMmapSegment>::const_interator CONST_ITR;
-
+	typedef std::vector<ossMmapSegment>::const_iterator CONST_ITR;
 	inline CONST_ITR begin()
 	{
 		return _segments.begin();
@@ -70,16 +69,9 @@ public:
 		memset(_fileName, 0, sizeof(_fileName));
 	}
 
-	~ossMmapFile()
+	~_ossMmapFile()
 	{
-		_mutex.get();
-		if(_opened)
-		{
-			close();
-			_fileOp.Close();
-			_opened = false;
-		}
-		_mutex.release();
+		close();
 	}
 
 	int open(const char *pFilename, unsigned int options);
